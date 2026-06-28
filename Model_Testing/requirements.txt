@@ -1,0 +1,8 @@
+neuralk
+pandas
+numpy
+scikit-learn
+metaflow
+tabpfn_client
+python-dotenv
+requests
