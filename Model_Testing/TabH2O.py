@@ -31,22 +31,22 @@ def get_data(split: bool = False):
 
         return (y_test_true, y_val_true)
     else:
-        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
+        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank.csv")
 
         test_size = len(full_data) * 0.2
         test_data = full_data.sample(n=int(test_size), random_state=42)
         train_data = full_data.drop(test_data.index)
         train_data = train_data.sample(n=100_000, random_state=42)
 
-        y_test_true = test_data["Churn"].copy()
-        test_data["Churn"] = ""
+        y_test_true = test_data["Exited"].copy()
+        test_data["Exited"] = ""
 
         val_size = len(train_data) * 0.2
         val_data = train_data.sample(n=int(val_size), random_state=42)
         train_data = train_data.drop(val_data.index)
 
-        y_val_true = val_data["Churn"].copy()
-        val_data["Churn"] = ""
+        y_val_true = val_data["Exited"].copy()
+        val_data["Exited"] = ""
 
         total_combined = pd.concat([train_data, val_data, test_data], ignore_index=True)
         total_combined.to_csv("total_for_prediction.csv", index=False)
@@ -69,7 +69,7 @@ with open("train_for_prediction.csv", "rb") as f:
         headers={"Authorization": f"Bearer {api_key}"},
         files={"file": ("train_for_prediction.csv", f)},
         data={
-            "target_column": "Churn",
+            "target_column": "Exited",
             "task": "classification",
         },
     )
@@ -86,7 +86,7 @@ val_preds = (val_pred_probs >= 0.5).astype(int)
         headers={"Authorization": f"Bearer {api_key}"},
         files={"file": ("total_for_prediction.csv", f)},
         data={
-            "target_column": "Churn",
+            "target_column": "Exited",
             "task": "classification",
         },
     )
@@ -98,8 +98,8 @@ all_pred_probs = np.array([p[1] for p in result])
 test_pred_probs = all_pred_probs[len(y_val_true):]
 test_preds = (test_pred_probs >= 0.5).astype(int)
 '''
-print(f"Validation ROC-AUC: {roc_auc_score(y_val_true, val_pred_probs)}\n")
-print(f"Validation Classification Report: \n{classification_report(y_val_true, val_preds)}")
+print(f"Test ROC-AUC: {roc_auc_score(y_val_true, val_pred_probs)}\n")
+print(f"Test Classification Report: \n{classification_report(y_val_true, val_preds)}")
 print(f"Confusion Matrix: \n{confusion_matrix(y_val_true, val_preds)}")
 '''
 print(f"Test ROC-AUC: {roc_auc_score(y_test_true, test_pred_probs)}\n")

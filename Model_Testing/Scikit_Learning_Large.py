@@ -21,9 +21,10 @@ def get_data(split: bool = False):
         X_test = testing_data.drop(columns=["CustomerID", "Churn"])
         y_test = testing_data["Churn"]
     else:
-        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
-        X_full = full_data.drop(columns=["CustomerID", "Churn"])
-        y_full = full_data["Churn"]
+        # full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
+        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank.csv")
+        X_full = full_data.drop(columns=["Exited"])
+        y_full = full_data["Exited"]
 
         # Splits the data into training, validation, and testing sets
         X_train, X_test, y_train, y_test = train_test_split(X_full, y_full, test_size=0.2, random_state=42, stratify=y_full)
@@ -36,8 +37,10 @@ def get_data(split: bool = False):
 X_train, X_val, X_test, y_train, y_val, y_test = get_data()
 
 # Stores the column names of the categorical and numerical columns
-cat_cols = ["Gender", "Subscription Type", "Contract Length"]
+#cat_cols = ["Gender", "Subscription Type", "Contract Length"]
+cat_cols = ["Gender", "Geography"]
 num_cols = [col for col in X_train.columns if col not in cat_cols]
+
 
 # Preprocesses the data
 preprocessor = ColumnTransformer([
@@ -48,7 +51,11 @@ preprocessor = ColumnTransformer([
 # The pipeline that the model uses. It first preprocesses the data and then uses the model provided.
 clf = Pipeline([
     ("preprocess", preprocessor),
-    ("model", RandomForestClassifier(n_estimators=100, class_weight="balanced"))
+    ("model", RandomForestClassifier(
+        n_estimators=100,
+        max_depth=10,
+        class_weight="balanced")
+    )
 ])
 
 print("Training the model now...\n")
