@@ -36,9 +36,9 @@ def get_data(split: bool = False):
         X_test = testing_data.drop(columns=["CustomerID", "Churn"])
         y_test = testing_data["Churn"]
     else:
-        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
-        X_full = full_data.drop(columns=["CustomerID", "Churn"])
-        y_full = full_data["Churn"]
+        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank.csv")
+        X_full = full_data.drop(columns=["Exited"])
+        y_full = full_data["Exited"]
 
         # Splits the data into training, validation, and testing sets
         X_train, X_test, y_train, y_test = train_test_split(X_full, y_full, test_size=0.2, random_state=42, stratify=y_full)

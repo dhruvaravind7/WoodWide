@@ -24,9 +24,9 @@ def get_data(split: bool = False):
         X_test = testing_data.drop(columns=["CustomerID", "Churn"])
         y_test = testing_data["Churn"]
     else:
-        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
-        X_full = full_data.drop(columns=["CustomerID", "Churn"])
-        y_full = full_data["Churn"]
+        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank.csv")
+        X_full = full_data.drop(columns=["Exited"])
+        y_full = full_data["Exited"]
 
         # Splits the data into training, validation, and testing sets
         X_train, X_test, y_train, y_test = train_test_split(X_full, y_full, test_size=0.09, random_state=42, stratify=y_full)
@@ -35,7 +35,9 @@ def get_data(split: bool = False):
 X_train, X_test, y_train, y_test = get_data()
 
 # Stores the column names of the categorical and numerical columns
-cat_cols = ["Gender", "Subscription Type", "Contract Length"]
+#cat_cols = ["Gender", "Subscription Type", "Contract Length"]
+#cat_cols = ["gender", "payment_method", "city"]
+cat_cols = ["Gender", "Geography"]
 num_cols = [col for col in X_train.columns if col not in cat_cols]
 
 start = time.time()
@@ -44,7 +46,7 @@ model = make_pipeline(
     skrub.TableVectorizer(),
     skrub.SquashingScaler(),
     SimpleImputer(),
-    SeldonClassifier(api_key=os.getenv("NeuralkAI_API_KEY2"))
+    SeldonClassifier(api_key=os.getenv("NeuralkAI_API_KEY3"))
 )
 
 model.fit(X_train, y_train)

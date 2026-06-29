@@ -2,10 +2,7 @@ import numpy as np
 import pandas as pd
 import time
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import RobustScaler, OneHotEncoder
+from xgboost import XGBClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -21,7 +18,6 @@ def get_data(split: bool = False):
         X_test = testing_data.drop(columns=["CustomerID", "Churn"])
         y_test = testing_data["Churn"]
     else:
-        # full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
         full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank.csv")
         X_full = full_data.drop(columns=["Exited"])
         y_full = full_data["Exited"]
@@ -35,27 +31,28 @@ def get_data(split: bool = False):
 # True means you use the Kaggle split. False means you combine the data and then split from that.
 # The test set and training set from kaggle has different proportions of some of the variables, which is why working with False allow for better generalizability.
 X_train, X_val, X_test, y_train, y_val, y_test = get_data()
-
-# Stores the column names of the categorical and numerical columns
 #cat_cols = ["Gender", "Subscription Type", "Contract Length"]
+#cat_cols = ["gender", "payment_method", "city"]
 cat_cols = ["Gender", "Geography"]
-num_cols = [col for col in X_train.columns if col not in cat_cols]
 
+for col in cat_cols:
+    X_train[col] = X_train[col].astype("category")
+    X_val[col] = X_val[col].astype("category")
+    X_test[col] = X_test[col].astype("category")
 
-# Preprocesses the data
-preprocessor = ColumnTransformer([
-    ("num", RobustScaler(), num_cols),
-    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)
-])
+scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
 
 # The pipeline that the model uses. It first preprocesses the data and then uses the model provided.
 clf = Pipeline([
-    ("preprocess", preprocessor),
-    ("model", RandomForestClassifier(
+    ("model", XGBClassifier(
         n_estimators=100,
-        max_depth=10,
-        class_weight="balanced")
-    )
+        max_depth=6,
+        learning_rate=0.1,
+        enable_categorical=True,
+        scale_pos_weight=scale_pos_weight,
+        eval_metric="logloss",
+        random_state=42
+    ))
 ])
 
 print("Training the model now...\n")
