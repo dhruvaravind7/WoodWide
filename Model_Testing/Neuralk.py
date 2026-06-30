@@ -37,8 +37,8 @@ X_train, X_test, y_train, y_test = get_data()
 # Stores the column names of the categorical and numerical columns
 #cat_cols = ["Gender", "Subscription Type", "Contract Length"]
 #cat_cols = ["gender", "payment_method", "city"]
-cat_cols = ["Gender", "Geography"]
-num_cols = [col for col in X_train.columns if col not in cat_cols]
+# cat_cols = ["Gender", "Geography"]
+# num_cols = [col for col in X_train.columns if col not in cat_cols]
 
 start = time.time()
 
