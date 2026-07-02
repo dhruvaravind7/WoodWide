@@ -6,3 +6,4 @@ metaflow
 tabpfn_client
 python-dotenv
 requests
+tabfm
