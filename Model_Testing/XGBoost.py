@@ -52,7 +52,7 @@ print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
 print("Cohen's Kappa Score:\n", cohen_kappa_score(y_test, test_preds), "\n")
 print("Classification Report:\n", classification_report(y_test, test_preds))
-print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n")
+print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n") 
 
 print("Training time taken: ", testing_start - training_start, " seconds", "\n")
 print("Testing time taken: ", time.time() - testing_start, " seconds", "\n")

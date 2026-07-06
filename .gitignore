@@ -2,7 +2,9 @@
 venv/
 tabfm/
 .env
+Model_Testing/AutogluonModels/
 .env.*
 !.env.example
 __pycache__/
 .DS_Store
+.claude
