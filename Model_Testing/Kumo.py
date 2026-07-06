@@ -1,30 +1,22 @@
 import os
 import time
+import numpy as np
 import pandas as pd
 import kumoai.experimental.rfm as rfm
 
 from dotenv import load_dotenv
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score
 
 load_dotenv()
 rfm.init(api_key=os.getenv("KUMO_API_KEY"))
+TRAIN_DATASET_LENGTH = 132027
 
-def get_data(split: bool = False):
-    if split:
-        training_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-training-master.csv")
-        testing_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-testing-master.csv")
+train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_train.csv")
+test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test.csv")
+data = pd.concat([train, test], ignore_index=True)
 
-        X_train_full = training_data.drop(columns=["CustomerID", "Churn"])
-        y_train_full = training_data["Churn"]
-        X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, test_size=0.2, random_state=42, stratify=y_train_full)
-        X_test = testing_data.drop(columns=["CustomerID", "Churn"])
-        y_test = testing_data["Churn"]
-    else:
-        # full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/customer_churn_dataset-master.csv")
-        full_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_serialized.csv")
-        return full_data
-
-data = get_data()
+data['Row_ID'] = range(1, len(data) + 1)
+y_test = test['Exited']
 
 graph = rfm.Graph.from_data({
     "churn_information": data
@@ -32,19 +24,27 @@ graph = rfm.Graph.from_data({
 graph["churn_information"].primary_key = "Row_ID"
 graph.validate()
 model = rfm.KumoRFM(graph)
-start = time.time()
+start_time = time.time()
 
-metrics = model.evaluate(
-    "PREDICT churn_information.Exited=1 FOR EACH churn_information.Row_ID",
-    metrics=['acc', 'precision', "recall", "f1", "auroc"]
-)
+pql_query = "PREDICT churn_information.Exited=1 FOR EACH churn_information.Row_ID"
 
-metrics_dict = metrics.set_index("metric")["value"].to_dict()
+with model.batch_mode(batch_size = 1000):
+    prediction = model.predict(
+        pql_query, 
+        indices=data['Row_ID'].tolist()[TRAIN_DATASET_LENGTH:]
+    )
 
-print("AUROC:", metrics_dict["auroc"])
-print("Accuracy:", metrics_dict["acc"])
-print("F1:", metrics_dict["f1"])
-print("Precision:", metrics_dict["precision"])
-print("Recall:", metrics_dict["recall"])
+np.save("predictions.npy", prediction[['TARGET_PRED', 'True_PROB']])
+print(prediction[['TARGET_PRED', 'True_PROB']])
+test_probs = prediction['True_PROB'].values
+test_preds = (test_probs >= 0.5).astype(int)
 
-print("Total Time: ", time.time() - start)
+# Prints the important metrics
+print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
+print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
+print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
+print("Cohen's Kappa Score:\n", cohen_kappa_score(y_test, test_preds), "\n")
+print("Classification Report:\n", classification_report(y_test, test_preds))
+print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n") 
+
+print("Total time taken: ", time.time() - start_time, " seconds", "\n")
