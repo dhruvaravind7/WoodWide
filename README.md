@@ -1,1 +1,1 @@
-Currently just have the starting files in here.
+The Model_Testing folder contains different models used by a variety of Tabular Data focused Machine Learning Models. These models were tested under a variety of different datasets (also found in the Model_Testing folder) to be comapred.
