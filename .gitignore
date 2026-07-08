@@ -8,3 +8,5 @@ Model_Testing/AutogluonModels/
 __pycache__/
 .DS_Store
 .claude
+data/
+benchmark_dataset.zip
