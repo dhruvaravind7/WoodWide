@@ -10,17 +10,17 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score
 
 # Loads the training data
-train_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_train.csv")
-X_train = train_data.drop(columns=["Exited"])
-y_train = train_data["Exited"]
+train_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_train.csv")
+X_train = train_data.drop(columns=["Subscribed"])
+y_train = train_data["Subscribed"]
 
 # Loads the testing data
-test_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test.csv")
-X_test = test_data.drop(columns=["Exited"])
-y_test = test_data["Exited"]
+test_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_test.csv")
+X_test = test_data.drop(columns=["Subscribed"])
+y_test = test_data["Subscribed"]
 
 # Stores the column names of the categorical and numerical columns
-cat_cols = ["Gender", "Geography"]
+cat_cols = ["Job", "Marital", "Education", "Default", "Housing", "Loan", "Contact", "Month", "Poutcome"]
 num_cols = [col for col in X_train.columns if col not in cat_cols]
 
 # Preprocesses the data
@@ -32,8 +32,8 @@ preprocessor = ColumnTransformer([
 # The pipeline that the model uses. It first preprocesses the data and then uses the model provided.
 clf = Pipeline([
     ("preprocess", preprocessor),
-    ("model", LogisticRegression(
-        max_iter=1000,
+    ("model", RandomForestClassifier(
+        n_estimators = 100,
         class_weight="balanced")
     )
 ])
@@ -54,7 +54,7 @@ print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
 print("Cohen's Kappa Score:\n", cohen_kappa_score(y_test, test_preds), "\n")
-print("Classification Report:\n", classification_report(y_test, test_preds))
+print("Classification Report:\n", classification_report(y_test, test_preds, digits=4))
 print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n")
 
 print("Training time taken: ", testing_start - training_start, " seconds", "\n")

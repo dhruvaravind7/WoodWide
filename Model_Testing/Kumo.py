@@ -9,24 +9,24 @@ from sklearn.metrics import roc_auc_score, classification_report, confusion_matr
 
 load_dotenv()
 rfm.init(api_key=os.getenv("KUMO_API_KEY"))
-TRAIN_DATASET_LENGTH = 132027
 
-train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_train.csv")
-test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test.csv")
+train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_train.csv")
+test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_test.csv")
 data = pd.concat([train, test], ignore_index=True)
+TRAIN_DATASET_LENGTH = len(train)
 
 data['Row_ID'] = range(1, len(data) + 1)
-y_test = test['Exited']
+y_test = test['Subscribed']
 
 graph = rfm.Graph.from_data({
-    "churn_information": data
+    "bank_marketing_information": data
 })
-graph["churn_information"].primary_key = "Row_ID"
+graph["bank_marketing_information"].primary_key = "Row_ID"
 graph.validate()
 model = rfm.KumoRFM(graph)
 start_time = time.time()
 
-pql_query = "PREDICT churn_information.Exited=1 FOR EACH churn_information.Row_ID"
+pql_query = "PREDICT bank_marketing_information.Subscribed=1 FOR EACH bank_marketing_information.Row_ID"
 
 with model.batch_mode(batch_size = 1000):
     prediction = model.predict(
@@ -44,7 +44,7 @@ print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
 print("Cohen's Kappa Score:\n", cohen_kappa_score(y_test, test_preds), "\n")
-print("Classification Report:\n", classification_report(y_test, test_preds))
+print("Classification Report:\n", classification_report(y_test, test_preds, digits=4))
 print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n") 
 
 print("Total time taken: ", time.time() - start_time, " seconds", "\n")

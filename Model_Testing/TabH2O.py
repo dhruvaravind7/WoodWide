@@ -9,9 +9,9 @@ from sklearn.metrics import roc_auc_score, classification_report, confusion_matr
 
 load_dotenv()
 
-train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_train.csv").head(80000)
-test_features = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test_features.csv").head(20000)
-y_test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test_labels.csv").head(20000)
+train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_train.csv")
+test_features = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_test_features.csv")
+y_test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_test_labels.csv")
 train_test = pd.concat([train, test_features], ignore_index=True)
 train_test.to_csv("data.csv", index=False)
 
@@ -27,7 +27,7 @@ with open("data.csv", "rb") as f:
         headers={"Authorization": f"Bearer {api_key}"},
         files={"file": ("data.csv", f)},
         data={
-            "target_column": "Exited",
+            "target_column": "Subscribed",
             "task": "classification",
         },
     )
@@ -44,7 +44,7 @@ print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
 print("Cohen's Kappa Score:\n", cohen_kappa_score(y_test, test_preds), "\n")
-print("Classification Report:\n", classification_report(y_test, test_preds))
+print("Classification Report:\n", classification_report(y_test, test_preds, digits=4))
 print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n")
 
 print("Total time taken: ", time.time() - start_time, " seconds", "\n")
