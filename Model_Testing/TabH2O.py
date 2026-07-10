@@ -3,15 +3,23 @@ import numpy as np
 import pandas as pd
 import time
 import requests
+import matplotlib
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
+import addcopyfighandler
 
+from sklearn.calibration import calibration_curve
 from dotenv import load_dotenv
-from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score
+from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
 
 load_dotenv()
 
-train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_train.csv")
-test_features = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_test_features.csv")
-y_test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Marketing_Dataset/marketing_test_labels.csv")
+train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_train.csv")
+train = train.sample(frac=0.6, random_state=42)
+test_features = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_features.csv")
+test_features = test_features.sample(frac=0.6, random_state=42)
+y_test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_labels.csv")
+y_test = y_test.sample(frac=0.6, random_state=42)
 train_test = pd.concat([train, test_features], ignore_index=True)
 train_test.to_csv("data.csv", index=False)
 
@@ -27,7 +35,7 @@ with open("data.csv", "rb") as f:
         headers={"Authorization": f"Bearer {api_key}"},
         files={"file": ("data.csv", f)},
         data={
-            "target_column": "Subscribed",
+            "target_column": "Exited",
             "task": "classification",
         },
     )
@@ -48,3 +56,24 @@ print("Classification Report:\n", classification_report(y_test, test_preds, digi
 print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n")
 
 print("Total time taken: ", time.time() - start_time, " seconds", "\n")
+
+true_prob, pred_prob = calibration_curve(y_test, test_probs, n_bins=10, strategy="quantile")
+brier = brier_score_loss(y_test, test_probs)
+print(f"Brier Score Loss: {brier:.4f}")
+plt.figure(figsize=(8, 6))
+
+# Plot the ideal baseline (perfect calibration)
+plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Perfectly Calibrated")
+
+# Plot the model's actual calibration curve
+plt.plot(pred_prob, true_prob, marker="o", color="blue", label="TabH2O")
+
+# Formatting the visual graph
+plt.xlabel("Mean Predicted Probability")
+plt.ylabel("Fraction of Positives (Actual Frequency)")
+plt.title("TabH2O Calibration Curve")
+plt.legend(loc="upper left")
+plt.grid(True)
+
+# Display the plot
+plt.show()
