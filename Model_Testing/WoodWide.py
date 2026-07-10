@@ -4,13 +4,19 @@ import time
 import json
 import io
 import pandas as pd
+import matplotlib
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
+import addcopyfighandler
+
+from sklearn.calibration import calibration_curve
 
 from dotenv import load_dotenv
-from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score
+from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
 
 load_dotenv()
 
-labels = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test_labels.csv").squeeze()
+labels = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_labels.csv").squeeze()
 api_key = os.getenv("WOODWIDE_API_KEY")
 base_url = "https://api.woodwide.ai"
 headers = {"Authorization": f"Bearer {api_key}"}
@@ -33,7 +39,7 @@ print("Upload finished. Dataset ID:", dataset_id)
 '''
 dataset_id = "ds_HZS4PM2T"
 ##########################################################################################################################################
-
+'''
 print("Creating model...")
 training_start = time.time()
 
@@ -66,17 +72,18 @@ while True:
     time.sleep(5)
 
 print("Training finished. Model ID:", model_id)
-
+'''
+model_id = "mdl_TSCR8PKV"
 ##########################################################################################################################################
-
+start = time.time()
 print("Running inference on new data...")
 
 # Run inference on new data and get predictions
-with open("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test_no_labels.csv", "rb") as f:
+with open("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_features.csv", "rb") as f:
     resp = requests.post(
         f"{base_url}/models/{model_id}/infer",
         headers=headers,
-        files={"file": ("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test_no_labels.csv", f, "text/csv")},
+        files={"file": ("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_features.csv", f, "text/csv")},
         data={"output_type": "json"},
     )
 
@@ -85,14 +92,37 @@ data = resp.json()['data']
 predictions = data["prediction"]
 pred_probs = [p if pred == 1 else 1 - p for pred, p in zip(predictions, data["prediction_prob"])]
 
+end_time = time.time()
+
 print("\nROC-AUC Score:\n", roc_auc_score(labels, pred_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(labels, pred_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(labels, predictions), "\n")
 print("Cohen's Kappa Score:\n", cohen_kappa_score(labels, predictions), "\n")
-print("Classification Report:\n", classification_report(labels, predictions))
+print("Classification Report:\n", classification_report(labels, predictions, digits=4))
 print("Confusion Matrix:\n", confusion_matrix(labels, predictions), "\n")
 
-print("Total time taken: ", 19.664893 - 15.293170, " seconds", "\n")
+print("Total time taken: ", end_time - start, " seconds", "\n")
+
+true_prob, pred_prob = calibration_curve(labels, pred_probs, n_bins=10, strategy="quantile")
+brier = brier_score_loss(labels, pred_probs)
+print(f"Brier Score Loss: {brier:.4f}")
+plt.figure(figsize=(8, 6))
+
+# Plot the ideal baseline (perfect calibration)
+plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Perfectly Calibrated")
+
+# Plot the model's actual calibration curve
+plt.plot(pred_prob, true_prob, marker="o", color="blue", label="WoodWide")
+
+# Formatting the visual graph
+plt.xlabel("Mean Predicted Probability")
+plt.ylabel("Fraction of Positives (Actual Frequency)")
+plt.title("WoodWide Calibration Curve")
+plt.legend(loc="upper left")
+plt.grid(True)
+
+# Display the plot
+plt.show()
 
 # response = requests.get(
 #     url = f"https://api.woodwide.ai/jobs?limit=5",

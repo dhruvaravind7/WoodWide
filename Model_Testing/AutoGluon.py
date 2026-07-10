@@ -4,12 +4,12 @@ import time
 from autogluon.tabular import TabularPredictor
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score
 
-train_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_train.csv")
-test_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/bank_test.csv")
-y_test = test_data['Exited']
+train_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Cardiovascular-Disease-dataset/disease_train.csv")
+test_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Cardiovascular-Disease-dataset/disease_test.csv")
+y_test = test_data['Disease']
 
 training_start = time.time()
-predictor = TabularPredictor(label="Exited", eval_metric="roc_auc").fit(
+predictor = TabularPredictor(label="Disease", eval_metric="mcc").fit(
     train_data = train_data,
     ag_args_fit = {"num_gpus": 1},
 )
@@ -23,7 +23,7 @@ print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
 print("Cohen's Kappa Score:\n", cohen_kappa_score(y_test, test_preds), "\n")
-print("Classification Report:\n", classification_report(y_test, test_preds))
+print("Classification Report:\n", classification_report(y_test, test_preds, digits=4))
 print("Confusion Matrix:\n", confusion_matrix(y_test, test_preds), "\n") 
 
 print("Training time taken: ", testing_start - training_start, " seconds", "\n")

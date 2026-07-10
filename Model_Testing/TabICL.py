@@ -1,5 +1,5 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 import time
 import matplotlib
 matplotlib.use("Qt5Agg")
@@ -7,55 +7,30 @@ import matplotlib.pyplot as plt
 import addcopyfighandler
 
 from sklearn.calibration import calibration_curve
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import RobustScaler, OneHotEncoder
-from sklearn.pipeline import Pipeline
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
+from tabicl import TabICLClassifier
 
-# Loads the training data
-train_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_train.csv")
-X_train = train_data.drop(columns=["Exited"])
-y_train = train_data["Exited"]
+train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_train.csv")
+test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test.csv")
 
-# Loads the testing data
-test_data = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test.csv")
-X_test = test_data.drop(columns=["Exited"])
-y_test = test_data["Exited"]
+TRAIN_SAMPLE_SIZE = 5000
+if TRAIN_SAMPLE_SIZE is not None and len(train) > TRAIN_SAMPLE_SIZE:
+    train = train.sample(n=TRAIN_SAMPLE_SIZE, random_state=42)
 
-# Stores the column names of the categorical and numerical columns
-cat_cols = ["Gender", "Geography", "IsActiveMember", "HasCrCard"]
-num_cols = [col for col in X_train.columns if col not in cat_cols]
+X_train = train.drop(columns=["Exited"])
+y_train = train["Exited"]
+X_test = test.drop(columns=["Exited"])
+y_test = test["Exited"]
 
-# Preprocesses the data
-preprocessor = ColumnTransformer([
-    ("num", RobustScaler(), num_cols),
-    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)
-])
-
-# The pipeline that the model uses. It first preprocesses the data and then uses the model provided.
-clf = Pipeline([
-    ("preprocess", preprocessor),
-    ("model", LogisticRegression(
-        max_iter = 1000,
-        class_weight="balanced")
-    )
-])
-
-print("Training the model now...\n")
-training_start= time.time()
-
-# Trains the model using the training data
-clf.fit(X_train, y_train)
+training_start = time.time()
+tabicl = TabICLClassifier()
+tabicl.fit(X_train, y_train)
 
 testing_start = time.time()
-# Running the inference
-test_probs = clf.predict_proba(X_test)[:, 1]
+test_probs = tabicl.predict_proba(X_test)
+test_probs = test_probs[:, 1]
 test_preds = (test_probs >= 0.5).astype(int)
 
-# Prints the important metrics
 print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
@@ -76,12 +51,12 @@ plt.figure(figsize=(8, 6))
 plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Perfectly Calibrated")
 
 # Plot the model's actual calibration curve
-plt.plot(pred_prob, true_prob, marker="o", color="blue", label="Logistic Regression")
+plt.plot(pred_prob, true_prob, marker="o", color="blue", label="TabICL")
 
 # Formatting the visual graph
 plt.xlabel("Mean Predicted Probability")
 plt.ylabel("Fraction of Positives (Actual Frequency)")
-plt.title("Logistic Regression Calibration Curve")
+plt.title("TahICL Calibration Curve")
 plt.legend(loc="upper left")
 plt.grid(True)
 
