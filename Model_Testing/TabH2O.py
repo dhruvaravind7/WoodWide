@@ -8,18 +8,21 @@ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import addcopyfighandler
 
+from memray import Tracker
 from sklearn.calibration import calibration_curve
 from dotenv import load_dotenv
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
 
 load_dotenv()
 
-train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_train.csv")
-train = train.sample(frac=0.6, random_state=42)
-test_features = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_features.csv")
-test_features = test_features.sample(frac=0.6, random_state=42)
-y_test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_labels.csv")
-y_test = y_test.sample(frac=0.6, random_state=42)
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
+
+# Loading the training and testing data
+train = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/train.csv")
+test = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test.csv")
+test_features = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test_features.csv")
+y_test = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test_labels.csv")
+
 train_test = pd.concat([train, test_features], ignore_index=True)
 train_test.to_csv("data.csv", index=False)
 
@@ -28,24 +31,24 @@ if not api_key:
     raise ValueError("TABH20_API_KEY not found in environment")
 
 start_time = time.time()
+with Tracker("Bank_Marketing_Dataset/memory_files/marketing_h2o_run.bin"):
+    with open("data.csv", "rb") as f:
+        response = requests.post(
+            "https://tabh2o.h2oai.com/api/v1/predict",
+            headers={"Authorization": f"Bearer {api_key}"},
+            files={"file": ("data.csv", f)},
+            data={
+                "target_column": "Subscribed",
+                "task": "classification",
+            },
+        )
+    if not response.ok:
+        print(f"Train request failed {response.status_code}: {response.text}")
+    response.raise_for_status()
+    result = response.json()["probabilities"]
 
-with open("data.csv", "rb") as f:
-    response = requests.post(
-        "https://tabh2o.h2oai.com/api/v1/predict",
-        headers={"Authorization": f"Bearer {api_key}"},
-        files={"file": ("data.csv", f)},
-        data={
-            "target_column": "Exited",
-            "task": "classification",
-        },
-    )
-if not response.ok:
-    print(f"Train request failed {response.status_code}: {response.text}")
-response.raise_for_status()
-result = response.json()["probabilities"]
-
-test_probs = np.array([p[1] for p in result])
-test_preds = (test_probs >= 0.5).astype(int)
+    test_probs = np.array([p[1] for p in result])
+    test_preds = (test_probs >= 0.5).astype(int)
 
 # Prints the important metrics
 print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
