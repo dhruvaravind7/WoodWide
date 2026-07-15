@@ -8,6 +8,7 @@ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import addcopyfighandler
 
+from memray import Tracker
 from sklearn.calibration import calibration_curve
 from neuralk import SeldonClassifier
 from dotenv import load_dotenv
@@ -16,15 +17,16 @@ from sklearn.metrics import roc_auc_score, classification_report, confusion_matr
 from sklearn.pipeline import make_pipeline
 
 load_dotenv()
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
 
-# Loads the training and testing data
-train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_train.csv")
-test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test.csv")
-test = test.sample(frac=0.4, random_state=42)
-X_train = train.drop(columns=["Exited"])
-y_train = train["Exited"]
-X_test = test.drop(columns=["Exited"])
-y_test = test["Exited"]
+# Loading the training and testing data
+train = pd.read_csv(f"{BASE}Heloc/train.csv")
+test = pd.read_csv(f"{BASE}Heloc/test.csv")
+
+X_train = train.drop(columns=["RiskPerformance"])
+y_train = train["RiskPerformance"]
+X_test = test.drop(columns=["RiskPerformance"])
+y_test = test["RiskPerformance"]
 
 # Creates the model pipeline
 model = make_pipeline(
@@ -34,15 +36,16 @@ model = make_pipeline(
     SeldonClassifier(api_key=os.getenv("NeuralkAI_API_KEY"))
 )
 # Training the model
-training_start = time.time()
-model.fit(X_train, y_train)
+with Tracker("Heloc/memory_files/heloc_neu_run.bin"):
+    training_start = time.time()
+    model.fit(X_train, y_train)
 
-# Testing the model
-testing_start = time.time()
-churn_probs = model.predict_proba(X_test)
-test_probs = churn_probs[:, 1]
-test_preds = (test_probs >= 0.5).astype(int)
-np.save("predictions.npy", churn_probs)
+    # Testing the model
+    testing_start = time.time()
+    churn_probs = model.predict_proba(X_test)
+    test_probs = churn_probs[:, 1]
+    test_preds = (test_probs >= 0.5).astype(int)
+    np.save("predictions.npy", churn_probs)
 
 churn_probs = np.load("predictions.npy")
 test_probs = churn_probs[:, 1]

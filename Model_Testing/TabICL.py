@@ -6,30 +6,35 @@ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import addcopyfighandler
 
+from memray import Tracker
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
 from tabicl import TabICLClassifier
 
-train = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_train.csv")
-test = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test.csv")
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
+
+# Loading the training and testing data
+train = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/train.csv")
+test = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test.csv")
 
 TRAIN_SAMPLE_SIZE = 5000
 if TRAIN_SAMPLE_SIZE is not None and len(train) > TRAIN_SAMPLE_SIZE:
     train = train.sample(n=TRAIN_SAMPLE_SIZE, random_state=42)
 
-X_train = train.drop(columns=["Exited"])
-y_train = train["Exited"]
-X_test = test.drop(columns=["Exited"])
-y_test = test["Exited"]
+X_train = train.drop(columns=["Subscribed"])
+y_train = train["Subscribed"]
+X_test = test.drop(columns=["Subscribed"])
+y_test = test["Subscribed"]
 
-training_start = time.time()
-tabicl = TabICLClassifier()
-tabicl.fit(X_train, y_train)
+with Tracker("Bank_Marketing_Dataset/memory_files/marketing_icl_run.bin"):
+    training_start = time.time()
+    tabicl = TabICLClassifier()
+    tabicl.fit(X_train, y_train)
 
-testing_start = time.time()
-test_probs = tabicl.predict_proba(X_test)
-test_probs = test_probs[:, 1]
-test_preds = (test_probs >= 0.5).astype(int)
+    testing_start = time.time()
+    test_probs = tabicl.predict_proba(X_test)
+    test_probs = test_probs[:, 1]
+    test_preds = (test_probs >= 0.5).astype(int)
 
 print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")

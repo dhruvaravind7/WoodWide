@@ -10,3 +10,15 @@ __pycache__/
 .claude
 data/
 benchmark_dataset.zip
+tabarena/
+Model_Testing/Titanic_Dataset/memory_files/
+Model_Testing/Heloc/memory_files/
+Model_Testing/Bank_Marketing_Dataset/memory_files/
+Model_Testing/Cardiovascular_Disease_Dataset/memory_files/
+tabarena_dataset.py
+Mitra_kaggle.py
+tabfm_weights/
+tabpfn_weights/
+mitra_weights/
+kaggle_upload/
+TabPFN_kaggle.py

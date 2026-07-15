@@ -9,6 +9,7 @@ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import addcopyfighandler
 
+from memray import Tracker
 from sklearn.calibration import calibration_curve
 
 from dotenv import load_dotenv
@@ -16,10 +17,12 @@ from sklearn.metrics import roc_auc_score, classification_report, confusion_matr
 
 load_dotenv()
 
-labels = pd.read_csv("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_labels.csv").squeeze()
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
+labels = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test_labels.csv").squeeze()
 api_key = os.getenv("WOODWIDE_API_KEY")
 base_url = "https://api.woodwide.ai"
 headers = {"Authorization": f"Bearer {api_key}"}
+
 
 # Uploading a dataset and training a model
 '''
@@ -37,7 +40,7 @@ dataset_id = resp.json()["dataset"]["id"]
 
 print("Upload finished. Dataset ID:", dataset_id)
 '''
-dataset_id = "ds_HZS4PM2T"
+dataset_id = "ds_E2DSK4S8"
 ##########################################################################################################################################
 '''
 print("Creating model...")
@@ -73,24 +76,25 @@ while True:
 
 print("Training finished. Model ID:", model_id)
 '''
-model_id = "mdl_TSCR8PKV"
+model_id = "mdl_4K4ZMTRX"
 ##########################################################################################################################################
 start = time.time()
 print("Running inference on new data...")
 
 # Run inference on new data and get predictions
-with open("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_features.csv", "rb") as f:
-    resp = requests.post(
-        f"{base_url}/models/{model_id}/infer",
-        headers=headers,
-        files={"file": ("/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/Bank_Churn_Dataset/bank_test_features.csv", f, "text/csv")},
-        data={"output_type": "json"},
-    )
+with Tracker("Bank_Marketing_Dataset/memory_files/marketing_ww_run.bin"):
+    with open(f"{BASE}Bank_Marketing_Dataset/test_features.csv", "rb") as f:
+        resp = requests.post(
+            f"{base_url}/models/{model_id}/infer",
+            headers=headers,
+            files={"file": (f"{BASE}Bank_Marketing_Dataset/test_features.csv", f, "text/csv")},
+            data={"output_type": "json"},
+        )
 
-resp.raise_for_status()
-data = resp.json()['data']
-predictions = data["prediction"]
-pred_probs = [p if pred == 1 else 1 - p for pred, p in zip(predictions, data["prediction_prob"])]
+    resp.raise_for_status()
+    data = resp.json()['data']
+    predictions = data["prediction"]
+    pred_probs = [p if pred == 1 else 1 - p for pred, p in zip(predictions, data["prediction_prob"])]
 
 end_time = time.time()
 
