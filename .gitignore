@@ -12,7 +12,7 @@ data/
 benchmark_dataset.zip
 tabarena/
 Model_Testing/Titanic_Dataset/memory_files/
-Model_Testing/Heloc/memory_files/
+Model_Testing/Heloc/
 Model_Testing/Bank_Marketing_Dataset/memory_files/
 Model_Testing/Cardiovascular_Disease_Dataset/memory_files/
 Model_Testing/Bank_Churn_Dataset/memory_files/
