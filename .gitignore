@@ -41,4 +41,8 @@ Model_Testing/Airline_Satisfaction/
 Model_Testing/Criteo/
 Model_Testing/Forest_Cover/
 scaling_charts.html
-wwai-main/
+wwai-main/Model_Testing/HIGGS_Dataset/
+Model_Testing/HEPMASS_Dataset/
+Model_Testing/Bank_Churn_Dataset/
+Model_Testing/customer_churn_master.csv
+Model_Testing/customer_churn_training.csv
