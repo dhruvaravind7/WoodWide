@@ -1,15 +1,16 @@
 import pandas as pd
-import numpy as np
-import time
 import matplotlib
+import time
 matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import addcopyfighandler
 
 from memray import Tracker
+from sklearn.preprocessing import OrdinalEncoder
+from tabdpt import TabDPTClassifier
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
-from tabicl import TabICLClassifier
+
 
 BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing"
 DIR = "Bank_Churn_Dataset"
@@ -17,30 +18,47 @@ TARGET = "Exited"
 RUN_NAME = "bank"
 
 # Loading the training and testing data
-train = pd.read_csv(f"{BASE}/{DIR}/train.csv")
-test = pd.read_csv(f"{BASE}/{DIR}/test.csv")
+train_data = pd.read_csv(f"{BASE}/{DIR}/train.csv")
+test_data = pd.read_csv(f"{BASE}/{DIR}/test.csv")
 
-TRAIN_SAMPLE_SIZE = 5000
-if TRAIN_SAMPLE_SIZE is not None and len(train) > TRAIN_SAMPLE_SIZE:
-    train = train.sample(n=TRAIN_SAMPLE_SIZE, random_state=42)
 
-X_train = train.drop(columns=[f"{TARGET}"])
-y_train = train[f"{TARGET}"]
-X_test = test.drop(columns=[f"{TARGET}"])
-y_test = test[f"{TARGET}"]
+X_train = train_data.drop(columns=[f"{TARGET}"])
+y_train = train_data[f"{TARGET}"]
 
-with Tracker(f"{DIR}/memory_files/{RUN_NAME}_icl_run.bin"):
+# Loads the testing data
+
+X_test = test_data.drop(columns=[f"{TARGET}"])
+y_test = test_data[f"{TARGET}"]
+
+num_cols = X_train.select_dtypes(include="number").columns.tolist()
+cat_cols = X_train.select_dtypes(exclude="number").columns.tolist()
+
+# 'handle_unknown' handles unseen categories in your test data safely
+encoder = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+
+# Fit and transform the training features
+X_train_encoded = X_train.copy()
+X_train_encoded[cat_cols] = encoder.fit_transform(X_train[cat_cols])
+
+X_test_encoded = X_test.copy()
+X_test_encoded[cat_cols] = encoder.transform(X_test[cat_cols])
+
+model = TabDPTClassifier(
+    device="cpu"           # Use "mps" for Apple Silicon GPU acceleration, or "cpu"
+)
+
+with Tracker(f"{DIR}/memory_files/{RUN_NAME}_dpt_run.bin"):
     print("Training...\n")
     training_start = time.time()
-    tabicl = TabICLClassifier()
-    tabicl.fit(X_train, y_train)
+    model.fit(X_train_encoded.to_numpy(dtype="float32"), y_train.to_numpy())
 
     print("Testing...\n")
     testing_start = time.time()
-    test_probs = tabicl.predict_proba(X_test)
+    test_probs = model.predict_proba(X_test_encoded.to_numpy(dtype="float32"), context_size=2048)
     test_probs = test_probs[:, 1]
     test_preds = (test_probs >= 0.5).astype(int)
 
+# Prints the important metrics
 print("\nROC-AUC Score:\n", roc_auc_score(y_test, test_probs), "\n")
 print("PR-AUC Score:\n", average_precision_score(y_test, test_probs), "\n")
 print("Matthews Correlation Coefficient:\n", matthews_corrcoef(y_test, test_preds), "\n")
@@ -61,12 +79,12 @@ plt.figure(figsize=(8, 6))
 plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Perfectly Calibrated")
 
 # Plot the model's actual calibration curve
-plt.plot(pred_prob, true_prob, marker="o", color="blue", label="TabICL")
+plt.plot(pred_prob, true_prob, marker="o", color="blue", label="TabDPT")
 
 # Formatting the visual graph
 plt.xlabel("Mean Predicted Probability")
 plt.ylabel("Fraction of Positives (Actual Frequency)")
-plt.title("TahICL Calibration Curve")
+plt.title("TabDPT Calibration Curve")
 plt.legend(loc="upper left")
 plt.grid(True)
 
