@@ -7,11 +7,11 @@ import time
 import matplotlib
 matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
+import TabFM
 import addcopyfighandler
 
 np.set_printoptions(precision=4, suppress=True)
 
-from memray import Tracker
 from sklearn.calibration import calibration_curve
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import (
@@ -19,8 +19,8 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
-    classification_report,
     cohen_kappa_score,
+    classification_report,
     confusion_matrix,
     f1_score,
     hamming_loss,
@@ -44,8 +44,6 @@ sys.path.insert(0, "/Users/dhruvaravind/Desktop/Work/WoodWide")
 # AttributeError the fallback doesn't catch. Poisoning the module entry turns
 # that into the ImportError tabfm expects, forcing the PyTorch backend.
 sys.modules["jax"] = None
-
-import Model_Testing.kaggle_items.tabfm.tabfm as tabfm
 
 BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing"
 DIR = "Forest_Cover"
@@ -75,7 +73,7 @@ y_test = test[TARGET]
 # Reading the checkpoint takes ~20s and is a one-time weight load rather
 # than fitting, so the training timer starts after it. It stays inside the
 # tracker because the resident weights are part of the memory footprint.
-model = tabfm.tabfm_v1_0_0_pytorch.load(
+model = TabFM.tabfm_v1_0_0_pytorch.load(
     model_type="classification",
     checkpoint_path=WEIGHTS,
     device="mps",
@@ -83,7 +81,7 @@ model = tabfm.tabfm_v1_0_0_pytorch.load(
 # enable_nnls must be off whenever max_num_rows is set (the constructor
 # rejects the combination), which also drops the NNLS-weighted blending
 # from the "ensemble" preset.
-clf = tabfm.TabFMClassifier.ensemble(
+clf = TabFM.TabFMClassifier.ensemble(
     model=model,
     max_num_rows=500,
     n_estimators=4,
