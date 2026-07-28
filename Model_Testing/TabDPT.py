@@ -12,20 +12,23 @@ from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
 
 
-BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing"
+DIR = "Bank_Churn_Dataset"
+TARGET = "Exited"
+RUN_NAME = "bank"
 
 # Loading the training and testing data
-train_data = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/train.csv")
-test_data = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test.csv")
+train_data = pd.read_csv(f"{BASE}/{DIR}/train.csv")
+test_data = pd.read_csv(f"{BASE}/{DIR}/test.csv")
 
 
-X_train = train_data.drop(columns=["Subscribed"])
-y_train = train_data["Subscribed"]
+X_train = train_data.drop(columns=[f"{TARGET}"])
+y_train = train_data[f"{TARGET}"]
 
 # Loads the testing data
 
-X_test = test_data.drop(columns=["Subscribed"])
-y_test = test_data["Subscribed"]
+X_test = test_data.drop(columns=[f"{TARGET}"])
+y_test = test_data[f"{TARGET}"]
 
 num_cols = X_train.select_dtypes(include="number").columns.tolist()
 cat_cols = X_train.select_dtypes(exclude="number").columns.tolist()
@@ -44,10 +47,12 @@ model = TabDPTClassifier(
     device="cpu"           # Use "mps" for Apple Silicon GPU acceleration, or "cpu"
 )
 
-with Tracker("Bank_Marketing_Dataset/memory_files/marketing_dpt_run.bin"):
+with Tracker(f"{DIR}/memory_files/{RUN_NAME}_dpt_run.bin"):
+    print("Training...\n")
     training_start = time.time()
     model.fit(X_train_encoded.to_numpy(dtype="float32"), y_train.to_numpy())
 
+    print("Testing...\n")
     testing_start = time.time()
     test_probs = model.predict_proba(X_test_encoded.to_numpy(dtype="float32"), context_size=2048)
     test_probs = test_probs[:, 1]

@@ -17,16 +17,19 @@ from sklearn.metrics import roc_auc_score, classification_report, confusion_matr
 from sklearn.pipeline import make_pipeline
 
 load_dotenv()
-BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing"
+DIR = "Water_Quality"
+TARGET = "Potability"
+RUN_NAME = "water"
 
 # Loading the training and testing data
-train = pd.read_csv(f"{BASE}Heloc/train.csv")
-test = pd.read_csv(f"{BASE}Heloc/test.csv")
+train = pd.read_csv(f"{BASE}/{DIR}/train.csv")
+test = pd.read_csv(f"{BASE}/{DIR}/test.csv")
 
-X_train = train.drop(columns=["RiskPerformance"])
-y_train = train["RiskPerformance"]
-X_test = test.drop(columns=["RiskPerformance"])
-y_test = test["RiskPerformance"]
+X_train = train.drop(columns=[TARGET])
+y_train = train[TARGET]
+X_test = test.drop(columns=[TARGET])
+y_test = test[TARGET]
 
 # Creates the model pipeline
 model = make_pipeline(
@@ -36,7 +39,7 @@ model = make_pipeline(
     SeldonClassifier(api_key=os.getenv("NeuralkAI_API_KEY"))
 )
 # Training the model
-with Tracker("Heloc/memory_files/heloc_neu_run.bin"):
+with Tracker(f"{DIR}/memory_files/{RUN_NAME}_neu_run.bin"):
     training_start = time.time()
     model.fit(X_train, y_train)
 

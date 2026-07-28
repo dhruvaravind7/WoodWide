@@ -11,26 +11,31 @@ from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix, matthews_corrcoef, cohen_kappa_score, average_precision_score, brier_score_loss
 from tabicl import TabICLClassifier
 
-BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing/"
+BASE = "/Users/dhruvaravind/Desktop/Work/WoodWide/Model_Testing"
+DIR = "Bank_Churn_Dataset"
+TARGET = "Exited"
+RUN_NAME = "bank"
 
 # Loading the training and testing data
-train = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/train.csv")
-test = pd.read_csv(f"{BASE}Bank_Marketing_Dataset/test.csv")
+train = pd.read_csv(f"{BASE}/{DIR}/train.csv")
+test = pd.read_csv(f"{BASE}/{DIR}/test.csv")
 
 TRAIN_SAMPLE_SIZE = 5000
 if TRAIN_SAMPLE_SIZE is not None and len(train) > TRAIN_SAMPLE_SIZE:
     train = train.sample(n=TRAIN_SAMPLE_SIZE, random_state=42)
 
-X_train = train.drop(columns=["Subscribed"])
-y_train = train["Subscribed"]
-X_test = test.drop(columns=["Subscribed"])
-y_test = test["Subscribed"]
+X_train = train.drop(columns=[f"{TARGET}"])
+y_train = train[f"{TARGET}"]
+X_test = test.drop(columns=[f"{TARGET}"])
+y_test = test[f"{TARGET}"]
 
-with Tracker("Bank_Marketing_Dataset/memory_files/marketing_icl_run.bin"):
+with Tracker(f"{DIR}/memory_files/{RUN_NAME}_icl_run.bin"):
+    print("Training...\n")
     training_start = time.time()
     tabicl = TabICLClassifier()
     tabicl.fit(X_train, y_train)
 
+    print("Testing...\n")
     testing_start = time.time()
     test_probs = tabicl.predict_proba(X_test)
     test_probs = test_probs[:, 1]

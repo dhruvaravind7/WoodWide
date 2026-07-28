@@ -1,11 +1,44 @@
-neuralk
+# Core data / metrics
 pandas
 numpy
 scikit-learn
-metaflow
-tabpfn
 python-dotenv
 requests
-tabfm
+tqdm
+
+# Plotting — scripts use the Qt5Agg backend, so PyQt5 is required
+matplotlib
+PyQt5
+addcopyfighandler
+
+# Memory profiling (memray.Tracker wraps every fit/predict block)
+memray
+
+# Dataset sourcing
 openml
+ucimlrepo
+
+# Models
+xgboost
+lightgbm
+neuralk
+skrub
+tabpfn
+tabpfn-extensions
 tabdpt
+tabicl
+autogluon
+metaflow
+
+# KumoRFM (Kumo.py, Kumo_explain.py) — kumo-api provides the kumoapi module
+kumoai
+kumo-api
+
+# Kaggle-notebook variants only (kaggle_items/); not needed for local runs
+torch
+huggingface_hub
+safetensors
+kagglehub
+
+# tabfm is installed from the local checkout at Model_Testing/tabfm, not PyPI:
+#   pip install -e Model_Testing/tabfm
