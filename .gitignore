@@ -46,3 +46,5 @@ Model_Testing/HEPMASS_Dataset/
 Model_Testing/Bank_Churn_Dataset/
 Model_Testing/customer_churn_master.csv
 Model_Testing/customer_churn_training.csv
+Model_Testing/HIGGS_Dataset
+.vscode/
